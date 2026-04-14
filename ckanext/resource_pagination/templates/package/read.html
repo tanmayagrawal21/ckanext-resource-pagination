@@ -1,9 +1,0 @@
-{% ckan_extends %}
-
-{% block package_resources %}
-  {% snippet "package/snippets/resources_list.html",
-    pkg=pkg,
-    resources=pkg_dict.resources,
-    can_edit=h.check_access('package_update', {'id':pkg.id }),
-    resource_pagination=resource_pagination %}
-{% endblock %}

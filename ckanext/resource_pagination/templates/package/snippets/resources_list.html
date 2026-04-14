@@ -1,16 +1,17 @@
 {% ckan_extends %}
 
 {% block resource_list %}
-  {% if resources %}
-    {% set pag = resource_pagination or {} %}
-    {% set cur_page = pag.get('page', 1) %}
-    {% set pages = pag.get('pages', 1) %}
-    {% set total = pag.get('total', resources|length) %}
-    {% set start = pag.get('start', 1) %}
-    {% set end = pag.get('end', resources|length) %}
+  {% set pag = h.paginate_resources(resources) %}
+  {% set page_resources = pag.resources %}
+  {% set cur_page = pag.page %}
+  {% set pages = pag.pages %}
+  {% set total = pag.total %}
+  {% set start = pag.start %}
+  {% set end = pag.end %}
 
+  {% if page_resources %}
     <ul class="resource-list">
-      {% for resource in resources %}
+      {% for resource in page_resources %}
         {% snippet 'package/snippets/resource_item.html', pkg=pkg, res=resource, can_edit=can_edit %}
       {% endfor %}
     </ul>
