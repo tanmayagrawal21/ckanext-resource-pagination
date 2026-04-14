@@ -1,98 +1,92 @@
-{% ckan_extends %}
+{% set pag = h.paginate_resources(resources) %}
+{% set page_resources = pag.resources %}
+{% set cur_page = pag.page %}
+{% set pages = pag.pages %}
+{% set total = pag.total %}
+{% set start = pag.start %}
+{% set end = pag.end %}
 
-{% block resource_list %}
-  {% set pag = h.paginate_resources(resources) %}
-  {% set page_resources = pag.resources %}
-  {% set cur_page = pag.page %}
-  {% set pages = pag.pages %}
-  {% set total = pag.total %}
-  {% set start = pag.start %}
-  {% set end = pag.end %}
+{% if page_resources %}
+  <ul class="resource-list">
+    {% for resource in page_resources %}
+      {% snippet 'package/snippets/resource_item.html', pkg=pkg, res=resource, can_edit=can_edit %}
+    {% endfor %}
+  </ul>
 
-  {% if page_resources %}
-    <ul class="resource-list">
-      {% for resource in page_resources %}
-        {% snippet 'package/snippets/resource_item.html', pkg=pkg, res=resource, can_edit=can_edit %}
-      {% endfor %}
-    </ul>
+  {% if pages > 1 %}
+    <p class="text-muted small">
+      Showing {{ start }}-{{ end }} of {{ total }} resources
+    </p>
+    <div class="pagination-wrapper">
+      <ul class="pagination justify-content-center">
+        {% if cur_page > 1 %}
+          <li class="page-item">
+            <a class="page-link" href="{{ h.resource_page_url(cur_page - 1) }}">&laquo;</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <span class="page-link">&laquo;</span>
+          </li>
+        {% endif %}
 
-    {% if pages > 1 %}
-      <p class="text-muted small">
-        Showing {{ start }}-{{ end }} of {{ total }} resources
-      </p>
-      <div class="pagination-wrapper">
-        <ul class="pagination justify-content-center">
-          {% if cur_page > 1 %}
-            <li class="page-item">
-              <a class="page-link" href="{{ h.resource_page_url(cur_page - 1) }}">&laquo;</a>
+        {% set window = 2 %}
+        {% set rs = cur_page - window %}
+        {% set re = cur_page + window %}
+        {% if rs < 1 %}{% set rs = 1 %}{% endif %}
+        {% if re > pages %}{% set re = pages %}{% endif %}
+
+        {% if rs > 1 %}
+          <li class="page-item">
+            <a class="page-link" href="{{ h.resource_page_url(1) }}">1</a>
+          </li>
+          {% if rs > 2 %}
+            <li class="page-item disabled">
+              <span class="page-link">&hellip;</span>
+            </li>
+          {% endif %}
+        {% endif %}
+
+        {% for p in range(rs, re + 1) %}
+          {% if p == cur_page %}
+            <li class="page-item active">
+              <span class="page-link">{{ p }}</span>
             </li>
           {% else %}
+            <li class="page-item">
+              <a class="page-link" href="{{ h.resource_page_url(p) }}">{{ p }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if re < pages %}
+          {% if re < pages - 1 %}
             <li class="page-item disabled">
-              <span class="page-link">&laquo;</span>
+              <span class="page-link">&hellip;</span>
             </li>
           {% endif %}
+          <li class="page-item">
+            <a class="page-link" href="{{ h.resource_page_url(pages) }}">{{ pages }}</a>
+          </li>
+        {% endif %}
 
-          {% set window = 2 %}
-          {% set rs = cur_page - window %}
-          {% set re = cur_page + window %}
-          {% if rs < 1 %}{% set rs = 1 %}{% endif %}
-          {% if re > pages %}{% set re = pages %}{% endif %}
-
-          {% if rs > 1 %}
-            <li class="page-item">
-              <a class="page-link" href="{{ h.resource_page_url(1) }}">1</a>
-            </li>
-            {% if rs > 2 %}
-              <li class="page-item disabled">
-                <span class="page-link">&hellip;</span>
-              </li>
-            {% endif %}
-          {% endif %}
-
-          {% for p in range(rs, re + 1) %}
-            {% if p == cur_page %}
-              <li class="page-item active">
-                <span class="page-link">{{ p }}</span>
-              </li>
-            {% else %}
-              <li class="page-item">
-                <a class="page-link" href="{{ h.resource_page_url(p) }}">{{ p }}</a>
-              </li>
-            {% endif %}
-          {% endfor %}
-
-          {% if re < pages %}
-            {% if re < pages - 1 %}
-              <li class="page-item disabled">
-                <span class="page-link">&hellip;</span>
-              </li>
-            {% endif %}
-            <li class="page-item">
-              <a class="page-link" href="{{ h.resource_page_url(pages) }}">{{ pages }}</a>
-            </li>
-          {% endif %}
-
-          {% if cur_page < pages %}
-            <li class="page-item">
-              <a class="page-link" href="{{ h.resource_page_url(cur_page + 1) }}">&raquo;</a>
-            </li>
-          {% else %}
-            <li class="page-item disabled">
-              <span class="page-link">&raquo;</span>
-            </li>
-          {% endif %}
-        </ul>
-      </div>
-    {% endif %}
-  {% else %}
-    {% block resource_list_empty %}
-      {% if h.check_access('resource_create', {'package_id': pkg['id']}) %}
-        {% trans url=h.url_for(pkg.type ~ '_resource.new', id=pkg.name) %}
-        <p class="empty">This dataset has no data, <a href="{{ url }}">why not add some?</a></p>
-        {% endtrans %}
-      {% else %}
-        <p class="empty">{{ _('This dataset has no data') }}</p>
-      {% endif %}
-    {% endblock %}
+        {% if cur_page < pages %}
+          <li class="page-item">
+            <a class="page-link" href="{{ h.resource_page_url(cur_page + 1) }}">&raquo;</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <span class="page-link">&raquo;</span>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
   {% endif %}
-{% endblock %}
+{% else %}
+  {% if h.check_access('resource_create', {'package_id': pkg['id']}) %}
+    {% trans url=h.url_for(pkg.type ~ '_resource.new', id=pkg.name) %}
+    <p class="empty">This dataset has no data, <a href="{{ url }}">why not add some?</a></p>
+    {% endtrans %}
+  {% else %}
+    <p class="empty">{{ _('This dataset has no data') }}</p>
+  {% endif %}
+{% endif %}
