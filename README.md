@@ -1,6 +1,18 @@
 # ckanext-resource-pagination
 
-Paginate resources on CKAN dataset pages. Prevents browser crashes on datasets with thousands of resources by showing 50 per page with navigation controls.
+A CKAN extension that adds pagination to the resource list on dataset pages.
+
+CKAN renders every resource on a single page by default. For datasets with hundreds or thousands of resources, this crashes the browser and makes pages unusable. This plugin paginates the resource list with configurable page sizes and Bootstrap 5 navigation controls.
+
+## Features
+
+- Paginates the resource list on dataset detail pages (`/dataset/<id>`)
+- Configurable number of resources per page (default: 50)
+- Only processes visible resources (skips `resource_view_list` calls for off-page resources)
+- Bootstrap 5 pagination controls with windowed page numbers
+- "Showing X-Y of Z resources" counter
+- Works with all dataset types
+- No database changes or migrations required
 
 ## Requirements
 
@@ -13,32 +25,37 @@ Paginate resources on CKAN dataset pages. Prevents browser crashes on datasets w
 pip install ckanext-resource-pagination
 ```
 
-Or from source:
-
-```bash
-pip install -e git+https://github.com/tanmayagrawal21/ckanext-resource-pagination.git#egg=ckanext-resource-pagination
-```
-
-## Configuration
-
 Add `resource_pagination` to `ckan.plugins` in your `ckan.ini`:
 
 ```ini
 ckan.plugins = ... resource_pagination
 ```
 
-No other configuration needed.
+Restart CKAN.
+
+## Configuration
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `ckanext.resource_pagination.per_page` | `50` | Number of resources to show per page |
+
+Example:
+
+```ini
+ckanext.resource_pagination.per_page = 25
+```
 
 ## How it works
 
-The plugin overrides the dataset read view (`/dataset/<id>`) to:
+The plugin registers a Flask blueprint via `IBlueprint` that intercepts the dataset read route (`/dataset/<id>`). The view:
 
-1. Fetch the dataset via `package_show` (standard CKAN behavior)
-2. Slice the resources list to 50 items based on the `resource_page` URL parameter
-3. Only call `resource_view_list` on the visible 50 resources (not all of them)
-4. Pass pagination metadata to the template for rendering page controls
+1. Calls `package_show` to fetch the dataset (standard CKAN behavior)
+2. Reads the `resource_page` query parameter from the URL
+3. Slices the resources list to the configured page size
+4. Only calls `resource_view_list` on visible resources
+5. Passes pagination metadata to the template
 
-This means a dataset with 11,000 resources loads as fast as one with 20.
+The plugin also overrides `package/read.html` and `package/snippets/resources_list.html` to render the sliced resource list with pagination controls.
 
 ## License
 

@@ -14,7 +14,7 @@ from ckan.views.dataset import (
     _setup_template_variables,
 )
 
-ITEMS_PER_PAGE = 50
+DEFAULT_ITEMS_PER_PAGE = 50
 
 
 def get_blueprint() -> Blueprint:
@@ -70,7 +70,9 @@ def paginated_read(id: str) -> Union[str, base.Response]:
     # --- Pagination ---
     all_resources = pkg_dict.get("resources", [])
     total = len(all_resources)
-    per_page = ITEMS_PER_PAGE
+    per_page = tk.asint(tk.config.get(
+        "ckanext.resource_pagination.per_page", DEFAULT_ITEMS_PER_PAGE
+    ))
     pages = max(1, (total + per_page - 1) // per_page)
 
     cur_page = request.args.get("resource_page", 1, type=int)
